@@ -14,3 +14,8 @@ Usage:
 구현된 기능들
 - n~m 페이지 크롤링
 - 새로운 글 크롤링
+
+사용하는 라이브러리
+- requests
+- sqlalchemy
+- [konlpy](http://konlpy.org/ko/v0.4.3/)
