@@ -16,6 +16,9 @@ ARTICLE_URL = 'http://gall.dcinside.com/board/view/?id=%s&no=%d'
 
 
 def getStartArticleId(html):
+    '''페이지의 가장 위에있는 글의 id를 리턴함
+    gallery가 있는지 체크용으로도 쓰임
+    '''
     m = re.search('<td class="t_notice" >([0-9]*)</td>', html)
     if m is None:
         return None
@@ -23,6 +26,9 @@ def getStartArticleId(html):
 
 
 def parseArticle(html):
+    '''게시물을 파싱해서 writer, ip, title, content, time 순으로 리턴함
+    content는 html코드(text처리는 트랜드 검색 에서만)
+    '''
     m_writer = re.search('<meta name="author" content="(.*)">', html)
     m_title = re.search(u'<meta name="title" content="(.*) - (.*) 갤러리">', html)
     m_ip = re.search('<li class="li_ip">(.*)</li>', html)
@@ -36,6 +42,7 @@ def parseArticle(html):
 
 
 def getArticleNumbersFromList(html):
+    '''글 목록 화면 html을 넘기면 글 id 리스트를 int형 리스트로 리턴'''
     m = re.findall('<td class="t_notice" >([0-9]*)</td>', html)
     ids = map(int, m)
     return ids
@@ -43,6 +50,7 @@ def getArticleNumbersFromList(html):
 
 class Crawl:
     def __init__(self, gallery, debug=False):
+        '''debug: True면 디버그용 문자열 출력'''
         self.debug = debug
         self.gallery = gallery
         self.galleryUrl = 'http://gall.dcinside.com/board/lists/?id=%s&page=%d'
@@ -69,6 +77,9 @@ class Crawl:
         self.s_req.headers.update(headers)
 
     def add2db(self, id, writer, ip, title, content, time_):
+        '''디비에 넣는다.
+        이미 존재하는지 체크를 하고 리턴값은 항상 None
+        '''
         check = self.s_db.query(Article).filter((Article.id == id) & (Article.category == self.categoryId)).count()
         if check > 0:
             return
@@ -94,6 +105,7 @@ class Crawl:
         return
 
     def crawlOnePage(self, page):
+        '''페이지 한개에 있는 글들을 크롤링한다.'''
         r = self.s_req.get(self.galleryUrl % (self.gallery, page))
         id = getStartArticleId(r.text)
         if id is None:
