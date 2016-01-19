@@ -11,6 +11,12 @@ from db import Category, Session, Article
 
 
 class Trend:
+    '''Trend가져오는 클래스
+    
+    주의사항
+    sqlite에서 하면 db에 락이 걸리기 때문에 db사용불가능
+    따라서 crawl_page.py가 돌아가고 있을때 스크립트 사용 비추천(mysql에서는 OK)
+    '''
     def __init__(self, gallery):
         self.gallery = gallery
         self.s_tag = Twitter()
