@@ -73,6 +73,31 @@ class Trend:
                 ret += count
         return ret
 
+    def trendDraw(self, words):
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        matplotlib.rc('font', family='DungGeunMo')
+        for word in words:
+            c = Counter()
+            for x in range(24):
+                c[x] = 0
+            likeword = '%%%s%%' % word
+            for time_, in self.s_db.query(Article.timestamp).filter(
+                Article.title.like(likeword) | Article.content.like(likeword) &
+                (Article.timestamp > time.time() - 60 * 60 * 24)
+                ):
+                hour = (time.time() - time_) / 60 / 60
+                hour = int(hour)
+                c[hour] += 1
+            l = c.items()
+            plt.plot(map(lambda x:x[0], l), map(lambda x:x[1], l), '.-', label=word)
+        plt.xlabel(u'시간')
+        plt.ylabel(u'글갯수')
+        plt.title(u'???? - by 통계청')
+        plt.legend(words)
+        plt.savefig("sampleg.png",dpi=(640))
+
     def getTrend(self, timelimit=60 * 60):
         c = Counter()
         result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
@@ -95,6 +120,7 @@ if __name__ == '__main__':
     from docopt import docopt
     arg = docopt(__doc__)
     trend = Trend(arg['<gallery>'])
-    trend.findCommonWord()
+    # trend.findCommonWord()
     # print trend.filterKeyword
     # trend.getTrend(60 * 60 * 12)
+    trend.trendDraw([u'게임', u'공포', u'삼국지'])
