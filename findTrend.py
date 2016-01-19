@@ -28,6 +28,24 @@ class Trend:
     def getNouns(self, text):
         return self.s_tag.nouns(text)
 
+    def findCommonWord(self, timelimit=60 * 60 * 24 * 3):
+        '''최근 몇일동안 있었던 글에서 가장 자주나오는 단어들을 찾음
+        이 단어들은 항상 자주 쓰이는 단어들이므로 제거
+        '''
+        c = Counter()
+        result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
+        for title, content in result:
+            words = set()
+            words.update(self.getNouns(title))
+            words.update(self.getNouns(content))
+            c.update(list(words))
+        for text, n in c.most_common(20):
+            if text in self.filterKeyword:
+                continue
+            if len(text) == 1:
+                continue
+            self.filterKeyword.append(text)
+
     def getTrend(self, timelimit=60 * 60):
         # TODO: 나중에 글 하나에 있는 단어로 md5처리한후 이걸가지고 비슷한 문서 검색해서 중복글 제거
         c = Counter()
@@ -48,4 +66,5 @@ if __name__ == '__main__':
     from docopt import docopt
     arg = docopt(__doc__)
     trend = Trend(arg['<gallery>'])
+    trend.findCommonWord()
     trend.getTrend()
