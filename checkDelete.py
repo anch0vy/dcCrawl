@@ -16,3 +16,4 @@ def checkDelete(html):
         else:
             session.update(Article).where(Article.id == notice).value(isDelete=1)
             # 없으면 삭제되었으니 isDelete 값 변경
+    session.commit()
