@@ -101,7 +101,6 @@ class Crawl:
                 print '[add]', id, ':', int(time.time()) - int(timestamp), title
             except:
                 print '[error]debug print error'
-                self.debug = False
         return
 
     def crawlOnePage(self, page):
