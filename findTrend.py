@@ -74,6 +74,8 @@ class Trend:
         return ret
 
     def trendDraw(self, words):
+        '''각 단어들의 빈도를 1시간 간격으로 조사해서 그래프로 그려준다.
+        '''
         import matplotlib
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
@@ -99,6 +101,14 @@ class Trend:
         plt.savefig("sampleg.png",dpi=(640))
 
     def getTrend(self, timelimit=60 * 60):
+        '''트랜드를 구해준다... 미완성
+
+        TODO
+            트랜드에 영향을 끼치는값
+            최근에 이게 핫해지기 시작했는가?
+            근데 이거 구하려면 30분 ~ 1시간으로 나눠서 추세를 봐야함
+            근데 또 추세를 볼때 그냥보면 안되고 (키워드가 포함된 글) / (그 해당 시간구간에 올라온 글) 값으로 추세를 구해야할것같음
+        '''
         c = Counter()
         result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
         for title, content in result:
