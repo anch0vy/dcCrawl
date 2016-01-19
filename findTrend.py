@@ -46,6 +46,26 @@ class Trend:
                 continue
             self.filterKeyword.append(text)
 
+    def spamCount(self, word):
+        '''특정사용자가 어떤 키워드를 30%이상 차지하고있으면 스팸일 가능성이 높기에 그만큼 값을 빼준다.'''
+        c = Counter()
+        word = u'%%%s%%' % word
+        result = self.s_db.query(Article.writer, Article.ip).filter(Article.title.like(word) | Article.content.like(word))
+        for writer, ip in result:
+            if writer and ip == '':
+                id = writer
+            else:
+                id = ip
+            c[id] += 1
+        ret = 0
+        sum_all = sum(map(lambda key:c[key], c))
+        for key, count in c.most_common(10):
+            per = float(count)/sum_all
+            if per > 0.3:
+                print '%-20s\t%0.3f'%(key, per)
+                ret += count
+        return ret
+
     def getTrend(self, timelimit=60 * 60):
         # TODO: 나중에 글 하나에 있는 단어로 md5처리한후 이걸가지고 비슷한 문서 검색해서 중복글 제거
         c = Counter()
@@ -55,16 +75,19 @@ class Trend:
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
             c.update(list(words))
+        tmp = []
         for text, n in c.most_common(100):
             if text in self.filterKeyword:
                 continue
             if len(text) == 1:
                 continue
+            print '============='
             print n, text
+            self.spamCount(text)
 
 if __name__ == '__main__':
     from docopt import docopt
     arg = docopt(__doc__)
     trend = Trend(arg['<gallery>'])
-    trend.findCommonWord()
-    trend.getTrend()
+    # trend.findCommonWord()
+    trend.getTrend(60 * 60 * 24 * 2)

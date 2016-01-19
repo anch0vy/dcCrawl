@@ -39,6 +39,6 @@ class Error(Base):
     sometext = Column(String(2000), nullable=True)
 
 
-engine = create_engine('sqlite:///test.db')
+engine = create_engine('mysql://root:thIs_is_d0cker_bot_Password@172.17.0.6/dc?charset=utf8', convert_unicode=True)
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
