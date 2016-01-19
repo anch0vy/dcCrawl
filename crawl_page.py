@@ -81,13 +81,18 @@ class Crawl:
         if id is None:
             raise RuntimeError('[error]wrong gall')
 
+    def IsArticleExist(self, id):
+        '''게시물이 db에 있는지 True, False로 알려줌'''
+        check = self.s_db.query(Article).filter((Article.id == id) & (Article.category == self.categoryId)).count()
+        check = check > 0
+        if check:
+            print 'passed'
+        return check
+
     def add2db(self, id, writer, ip, title, content, time_):
         '''디비에 넣는다.
-        이미 존재하는지 체크를 하고 리턴값은 항상 None
+        이미 존재하는지는 add2db 호출전 IsArticleExist로 체크해줘야함
         '''
-        check = self.s_db.query(Article).filter((Article.id == id) & (Article.category == self.categoryId)).count()
-        if check > 0:
-            return
         timestamp = time.mktime(datetime.datetime.strptime(time_, "%Y-%m-%d %H:%M:%S").timetuple())
         article = Article()
         article.id = id
@@ -116,6 +121,8 @@ class Crawl:
             if id in self.idSet:
                 continue
             self.idSet.add(id)
+            if self.IsArticleExist(id):
+                continue
             try:
                 r = self.s_req.get(ARTICLE_URL % (self.gallery, id))
                 writer, ip, title, content, time_ = parseArticle(r.text)
