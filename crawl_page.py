@@ -76,7 +76,7 @@ class Crawl:
         self.s_req = requests.Session()
         self.s_req.headers.update(headers)
 
-        r = self.s_req.get(self.galleryUrl % (self.gallery, page))
+        r = self.s_req.get(self.galleryUrl % (self.gallery, 1))
         id = getStartArticleId(r.text)
         if id is None:
             raise RuntimeError('[error]wrong gall')
