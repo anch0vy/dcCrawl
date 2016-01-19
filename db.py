@@ -42,12 +42,3 @@ class Error(Base):
 engine = create_engine('sqlite:///test.db')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
-
-# session = Session()
-# if session.query(Category).count() == 0:
-#     category = Category(id=0, name=u'분류안됨')
-#     session.add(category)
-#     category = Category(id=1, name=u'휴지통')
-#     session.add(category)
-#     session.commit()
-# session.close()
