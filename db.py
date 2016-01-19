@@ -38,7 +38,9 @@ class Error(Base):
     articleId = Column(Integer, nullable=True)
     sometext = Column(String(2000), nullable=True)
 
-
-engine = create_engine('mysql://root:thIs_is_d0cker_bot_Password@172.17.0.6/dc?charset=utf8', convert_unicode=True)
+try:
+    engine = create_engine('mysql://root:password@address/dc?charset=utf8', convert_unicode=True)
+except:
+    engine = create_engine('sqlite:///test.db')
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
