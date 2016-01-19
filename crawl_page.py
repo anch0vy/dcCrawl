@@ -17,7 +17,7 @@ ARTICLE_URL = 'http://gall.dcinside.com/board/view/?id=%s&no=%d'
 
 def getStartArticleId(html):
     '''페이지의 가장 위에있는 글의 id를 리턴함
-    gallery가 있는지 체크용으로도 쓰임
+    gallery가 있는지 체크용으로 쓰임
     '''
     m = re.search('<td class="t_notice" >([0-9]*)</td>', html)
     if m is None:
@@ -76,6 +76,11 @@ class Crawl:
         self.s_req = requests.Session()
         self.s_req.headers.update(headers)
 
+        r = self.s_req.get(self.galleryUrl % (self.gallery, page))
+        id = getStartArticleId(r.text)
+        if id is None:
+            raise RuntimeError('[error]wrong gall')
+
     def add2db(self, id, writer, ip, title, content, time_):
         '''디비에 넣는다.
         이미 존재하는지 체크를 하고 리턴값은 항상 None
@@ -105,11 +110,6 @@ class Crawl:
 
     def crawlOnePage(self, page):
         '''페이지 한개에 있는 글들을 크롤링한다.'''
-        r = self.s_req.get(self.galleryUrl % (self.gallery, page))
-        id = getStartArticleId(r.text)
-        if id is None:
-            raise RuntimeError('[error]wrong gall')
-
         r = self.s_req.get(self.galleryUrl % (self.gallery, page))
         ids = getArticleNumbersFromList(r.text)
         for id in ids:
