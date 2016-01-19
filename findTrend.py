@@ -44,6 +44,7 @@ class Trend:
             words = set()
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
+            words = filter(lambda x:len(x)>1, words)
             c.update(list(words))
         for text, n in c.most_common(20):
             if text in self.filterKeyword:
@@ -73,7 +74,6 @@ class Trend:
         return ret
 
     def getTrend(self, timelimit=60 * 60):
-        # TODO: 나중에 글 하나에 있는 단어로 md5처리한후 이걸가지고 비슷한 문서 검색해서 중복글 제거
         c = Counter()
         result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
         for title, content in result:
@@ -95,5 +95,6 @@ if __name__ == '__main__':
     from docopt import docopt
     arg = docopt(__doc__)
     trend = Trend(arg['<gallery>'])
-    # trend.findCommonWord()
-    trend.getTrend(60 * 60 * 24 * 2)
+    trend.findCommonWord()
+    # print trend.filterKeyword
+    # trend.getTrend(60 * 60 * 12)
