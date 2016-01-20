@@ -12,7 +12,7 @@ def checkDelete(html):
     last = breaklist[-1]
     # 각각의 첫번째, 마지막 넘버
     sdb = Session()
-    for notice in range(first, last):
+    for notice in range(first, last + 1):
         if sdb.query(Article).filter(Article.id == notice).count() is not 0:
             # Article.id 에 같은 넘버가 있으면 삭제 안된 것
             continue
