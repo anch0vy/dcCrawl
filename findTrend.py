@@ -13,7 +13,7 @@ from db import Category, Session, Article
 
 class Trend:
     '''Trend가져오는 클래스
-    
+
     주의사항
     sqlite에서 하면 db에 락이 걸리기 때문에 db사용불가능
     따라서 crawl_page.py가 돌아가고 있을때 스크립트 사용 비추천(mysql에서는 OK)
@@ -45,7 +45,7 @@ class Trend:
             words = set()
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
-            words = filter(lambda x:len(x)>1, words)
+            words = filter(lambda x: len(x)> 1, words)
             c.update(list(words))
         for text, n in c.most_common(20):
             if text in self.filterKeyword:
@@ -66,11 +66,11 @@ class Trend:
                 id = ip
             c[id] += 1
         ret = 0
-        sum_all = sum(map(lambda key:c[key], c))
+        sum_all = sum(map(lambda key: c[key], c))
         for key, count in c.most_common(10):
-            per = float(count)/sum_all
+            per = float(count) / sum_all
             if per > 0.3:
-                print '%-20s\t%0.3f'%(key, per)
+                print '%-20s\t%0.3f' % (key, per)
                 ret += count
         return ret
 
@@ -78,10 +78,11 @@ class Trend:
         '''각 단어들의 빈도를 1시간 간격으로 조사해서 그래프로 그려준다.
         '''
         import matplotlib
-        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
+        matplotlib.use('Agg')
         matplotlib.rc('font', family='DungGeunMo')
-        plt.rcParams["figure.figsize"] = 15,5
+        # 만약 문제가있을때 DungGeunMo폰트를 ~/.fonts폴더에 넣고  fc-cache -f -v실행한후 ~/.cache/matplotlib 폴더를 날려보자
+        plt.rcParams["figure.figsize"] = 15, 5
         for word in words:
             c = Counter()
             likeword = '%%%s%%' % word
@@ -94,12 +95,12 @@ class Trend:
                 c[hour] += 1
             l = c.items()
             l.sort()
-            plt.plot(map(lambda x:x[0], l), map(lambda x:x[1], l), '-', label=word)
+            plt.plot(map(lambda x: x[0], l), map(lambda x: x[1], l), '-', label=word)
         plt.xlabel(u'시간')
         plt.ylabel(u'글갯수')
         plt.title(u'???? - by 통계청')
         plt.legend(words)
-        plt.savefig("sampleg.png",dpi=(640))
+        plt.savefig("sampleg.png", dpi=(640))
 
     def getTrend(self, timelimit=60 * 60):
         '''트랜드를 구해준다... 미완성
@@ -117,7 +118,6 @@ class Trend:
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
             c.update(list(words))
-        tmp = []
         for text, n in c.most_common(100):
             if text in self.filterKeyword:
                 continue
