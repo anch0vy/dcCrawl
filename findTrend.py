@@ -88,6 +88,7 @@ class Trend:
             likeword = '%%%s%%' % word
             for time_, in self.s_db.query(Article.timestamp).filter(
                 (Article.title.like(likeword) | Article.content.like(likeword)) &
+                (Article.category == self.categoryId) &
                 (Article.timestamp > time.time() - 60 * 60 * 24) &
                 (Article.timestamp < time.time() - 60 * 60)
                 ):
@@ -112,7 +113,10 @@ class Trend:
             근데 또 추세를 볼때 그냥보면 안되고 (키워드가 포함된 글) / (그 해당 시간구간에 올라온 글) 값으로 추세를 구해야할것같음
         '''
         c = Counter()
-        result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
+        result = self.s_db.query(Article.title, Article.content).filter(
+            (Article.timestamp > time.time() - timelimit) &
+            (Article.category == self.categoryId)
+            )
         for title, content in result:
             words = set()
             words.update(self.getNouns(title))
