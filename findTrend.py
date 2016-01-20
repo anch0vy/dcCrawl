@@ -78,8 +78,8 @@ class Trend:
         '''각 단어들의 빈도를 1시간 간격으로 조사해서 그래프로 그려준다.
         '''
         import matplotlib
+        matplotlib.use('Agg')  # 무조건 임포트다음에 바로 써줘야한다
         import matplotlib.pyplot as plt
-        matplotlib.use('Agg')
         matplotlib.rc('font', family='DungGeunMo')
         # 만약 문제가있을때 DungGeunMo폰트를 ~/.fonts폴더에 넣고  fc-cache -f -v실행한후 ~/.cache/matplotlib 폴더를 날려보자
         plt.rcParams["figure.figsize"] = 15, 5
