@@ -5,6 +5,7 @@ Usage:
     findTrend.py <gallery> [--debug]
 """
 import time
+import datetime
 from collections import Counter
 from konlpy.tag import Twitter
 from db import Category, Session, Article
@@ -80,20 +81,20 @@ class Trend:
         matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         matplotlib.rc('font', family='DungGeunMo')
+        plt.rcParams["figure.figsize"] = 15,5
         for word in words:
             c = Counter()
-            for x in range(24):
-                c[x] = 0
             likeword = '%%%s%%' % word
             for time_, in self.s_db.query(Article.timestamp).filter(
-                Article.title.like(likeword) | Article.content.like(likeword) &
-                (Article.timestamp > time.time() - 60 * 60 * 24)
+                (Article.title.like(likeword) | Article.content.like(likeword)) &
+                (Article.timestamp > time.time() - 60 * 60 * 24) &
+                (Article.timestamp < time.time() - 60 * 60)
                 ):
-                hour = (time.time() - time_) / 60 / 60
-                hour = int(hour)
+                hour = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 30))
                 c[hour] += 1
             l = c.items()
-            plt.plot(map(lambda x:x[0], l), map(lambda x:x[1], l), '.-', label=word)
+            l.sort()
+            plt.plot(map(lambda x:x[0], l), map(lambda x:x[1], l), '-', label=word)
         plt.xlabel(u'시간')
         plt.ylabel(u'글갯수')
         plt.title(u'???? - by 통계청')
@@ -133,4 +134,4 @@ if __name__ == '__main__':
     # trend.findCommonWord()
     # print trend.filterKeyword
     # trend.getTrend(60 * 60 * 12)
-    trend.trendDraw([u'게임', u'공포', u'삼국지'])
+    trend.trendDraw([u'삼국지', u'와우'])
