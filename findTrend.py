@@ -45,7 +45,7 @@ class Trend:
             words = set()
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
-            words = filter(lambda x: len(x)> 1, words)
+            words = filter(lambda x: len(x) > 1, words)
             c.update(list(words))
         for text, n in c.most_common(20):
             if text in self.filterKeyword:
@@ -83,8 +83,14 @@ class Trend:
         matplotlib.rc('font', family='DungGeunMo')
         # 만약 문제가있을때 DungGeunMo폰트를 ~/.fonts폴더에 넣고  fc-cache -f -v실행한후 ~/.cache/matplotlib 폴더를 날려보자
         plt.rcParams["figure.figsize"] = 15, 5
+        cBase = Counter()
+        # 그래프 그릴때 미리 전부 0으로 셋팅안해두면 의도한대로 그래프가 안그려짐
+        for time_ in range(int(time.time() - 60 * 60 * 24), int(time.time() - 60 * 60)):
+            tmp = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 20))
+            cBase[tmp] = 0
+
         for word in words:
-            c = Counter()
+            c = cBase.copy()
             likeword = '%%%s%%' % word
             for time_, in self.s_db.query(Article.timestamp).filter(
                 (Article.title.like(likeword) | Article.content.like(likeword)) &
@@ -92,7 +98,7 @@ class Trend:
                 (Article.timestamp > time.time() - 60 * 60 * 24) &
                 (Article.timestamp < time.time() - 60 * 60)
                 ):
-                hour = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 30))
+                hour = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 20))
                 c[hour] += 1
             l = c.items()
             l.sort()
