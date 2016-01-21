@@ -6,6 +6,7 @@ Usage:
 """
 import time
 import datetime
+import numpy as np
 from collections import Counter
 from konlpy.tag import Twitter
 from db import Category, Session, Article
@@ -40,14 +41,17 @@ class Trend:
         이 단어들은 항상 자주 쓰이는 단어들이므로 제거
         '''
         c = Counter()
-        result = self.s_db.query(Article.title, Article.content).filter(Article.timestamp > time.time() - timelimit)
+        result = self.s_db.query(Article.title, Article.content).filter(
+            (Article.timestamp > time.time() - timelimit) &
+            (Article.category == self.categoryId)
+            )
         for title, content in result:
             words = set()
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
             words = filter(lambda x: len(x) > 1, words)
             c.update(list(words))
-        for text, n in c.most_common(20):
+        for text, n in c.most_common(100):
             if text in self.filterKeyword:
                 continue
             if len(text) == 1:
@@ -58,7 +62,10 @@ class Trend:
         '''특정사용자가 어떤 키워드를 30%이상 차지하고있으면 스팸일 가능성이 높기에 그만큼 값을 빼준다.'''
         c = Counter()
         word = u'%%%s%%' % word
-        result = self.s_db.query(Article.writer, Article.ip).filter(Article.title.like(word) | Article.content.like(word))
+        result = self.s_db.query(Article.title, Article.content).filter(
+            (Article.timestamp > time.time() - timelimit) &
+            (Article.category == self.categoryId)
+            )
         for writer, ip in result:
             if writer and ip == '':
                 id = writer
@@ -74,8 +81,8 @@ class Trend:
                 ret += count
         return ret
 
-    def trendDraw(self, words):
-        '''각 단어들의 빈도를 1시간 간격으로 조사해서 그래프로 그려준다.
+    def trendDraw(self, words, filename):
+        '''각 단어들의 빈도를 30분 간격으로 조사해서 그래프로 그려준다.
         '''
         import matplotlib
         matplotlib.use('Agg')  # 무조건 임포트다음에 바로 써줘야한다
@@ -86,7 +93,7 @@ class Trend:
         cBase = Counter()
         # 그래프 그릴때 미리 전부 0으로 셋팅안해두면 의도한대로 그래프가 안그려짐
         for time_ in range(int(time.time() - 60 * 60 * 24), int(time.time() - 60 * 60)):
-            tmp = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 20))
+            tmp = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 30))
             cBase[tmp] = 0
 
         for word in words:
@@ -98,18 +105,27 @@ class Trend:
                 (Article.timestamp > time.time() - 60 * 60 * 24) &
                 (Article.timestamp < time.time() - 60 * 60)
                 ):
-                hour = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 20))
+                hour = datetime.datetime.fromtimestamp(time_ - time_ % (60 * 30))
                 c[hour] += 1
             l = c.items()
             l.sort()
+
+            data = map(lambda x: x[1], l)[-2:]
+            x = np.arange(0,len(data))
+            y = np.array(data)
+            z = np.polyfit(x,y,1)
+            tag = str(z)
+
             plt.plot(map(lambda x: x[0], l), map(lambda x: x[1], l), '-', label=word)
+
         plt.xlabel(u'시간')
         plt.ylabel(u'글갯수')
-        plt.title(u'???? - by 통계청')
+        plt.title(tag)
         plt.legend(words)
-        plt.savefig("sampleg.png", dpi=(640))
+        plt.savefig(filename, dpi=(640))
+        plt.clf()
 
-    def getTrend(self, timelimit=60 * 60):
+    def getTrend(self, timelimit=60 * 30):
         '''트랜드를 구해준다... 미완성
 
         TODO
@@ -127,21 +143,55 @@ class Trend:
             words = set()
             words.update(self.getNouns(title))
             words.update(self.getNouns(content))
-            c.update(list(words))
-        for text, n in c.most_common(100):
-            if text in self.filterKeyword:
-                continue
-            if len(text) == 1:
-                continue
-            print '============='
-            print n, text
-            self.spamCount(text)
+            words = list(words)
+            words = filter(lambda x: len(x) > 1, words)
+            c.update(words)
+
+        for word, n in c.most_common(100):
+            tmp = self.test(word)
+            if tmp[0] > 1.5:
+                print word, n, tmp
+            if n == 1:
+                break
+
+    def test(self, word):
+        result = []
+        likeword = '%%%s%%' % word
+        startTime = int(time.time() - 60 * 60 * 24)
+        midTime = int(time.time() - 60 * 30)
+        t1 = self.s_db.query(Article).filter(
+            (Article.timestamp >= startTime) &
+            (Article.timestamp <= midTime) &
+            (Article.category == self.categoryId) &
+            (Article.title.like(likeword) | Article.content.like(likeword))
+            ).count()
+        t1_entire = self.s_db.query(Article).filter(
+            (Article.timestamp >= startTime) &
+            (Article.timestamp <= midTime) &
+            (Article.category == self.categoryId)
+            ).count()
+        t2 = self.s_db.query(Article).filter(
+            (Article.timestamp >= midTime) &
+            (Article.category == self.categoryId) &
+            (Article.title.like(likeword) | Article.content.like(likeword))
+            ).count()
+        t2_entire = self.s_db.query(Article).filter(
+            (Article.timestamp >= midTime) &
+            (Article.category == self.categoryId)
+            ).count()
+        try:
+            t1_per = t1 / float(t1_entire)
+            t2_per = t2 / float(t2_entire)
+            return t2_per / t1_per, t2_per, t1_per
+        except:
+            return 100, None
 
 if __name__ == '__main__':
     from docopt import docopt
+    # now = time.time()
+    # def mytime():
+    #     return now - 60 * 60 * 10
+    # time.time = mytime
     arg = docopt(__doc__)
     trend = Trend(arg['<gallery>'])
-    # trend.findCommonWord()
-    # print trend.filterKeyword
-    # trend.getTrend(60 * 60 * 12)
-    trend.trendDraw([u'삼국지', u'와우'])
+    trend.getTrend()
